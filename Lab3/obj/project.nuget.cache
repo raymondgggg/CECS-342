@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "PjLKaU+7GW5K3E3Gv7NpD0hPi4R66x9yGSvjn7W6FU9S/nxeTPaGISZjwHiTzlAjv60MR4kKisXJNhK2u85oJA==",
+  "success": true,
+  "projectFilePath": "/home/raymond/programming/F#/CECS-342/Lab3/Bank.fsproj",
+  "expectedPackageFiles": [
+    "/home/raymond/.nuget/packages/fsharp.core/5.0.0/fsharp.core.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

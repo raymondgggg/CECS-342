@@ -63,18 +63,3 @@ let maxOverdrawn coll =
                 maxOverdrawnInner tail newOAcctList
     let x = maxOverdrawnInner coll [0]
     List.max x
-
-
-           
-           
-
-            
-            
-           
-                
-
-       
-            
-        
-            
-                

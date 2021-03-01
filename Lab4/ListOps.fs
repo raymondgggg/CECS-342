@@ -1,3 +1,4 @@
+// Raymond Guevara
 module ListOps
 
 type Account =
@@ -23,7 +24,7 @@ let rec count x coll =
     | [] -> 0
     | head::tail when head = x -> 1 + (count x tail)
     | _ :: tail -> count x tail
-    
+
 // countEvens coll
 //
 // count the number of even integers in coll.
@@ -45,11 +46,10 @@ let rec lastElement coll =
         |> List.tail
         |> lastElement 
 
-// maxOverdrawn coll
+// maxOverdrawn colla
 //
 // given a list of Accounts, return the largest Overdrawn amount, or 0 if none
 // are overdrawn
-
 let maxOverdrawn coll = 
     let rec maxOverdrawnInner coll oAcctList =
         match coll with 
@@ -61,5 +61,5 @@ let maxOverdrawn coll =
             | Overdrawn o -> 
                 let newOAcctList = List.append oAcctList [o]
                 maxOverdrawnInner tail newOAcctList
-    let x = maxOverdrawnInner coll [0]
+    let x = maxOverdrawnInner coll [0] // default list value for Overdrawn account list
     List.max x

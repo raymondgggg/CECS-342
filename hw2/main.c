@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-
 struct Employee {
     void** vtable;
     int age;

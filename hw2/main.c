@@ -133,7 +133,7 @@ int main(){
         h->hours = hours;
         // Memory Management.
         e = realloc(e, sizeof(struct HourlyEmployee)); // resize orginal pointer. (not needed for program to work)
-        e = (struct HourlyEmployee*) h; // have Employee pointer of new size point to HourlyEmployee pointer.
+        e = (void*) h; // have Employee pointer of new size point to HourlyEmployee pointer.
     }
     else if (usrInt == 2){
         struct CommissionEmployee *c = malloc(sizeof(struct CommissionEmployee));
@@ -147,7 +147,7 @@ int main(){
         c->sales_amount = sales_amount;
         // Memory Management.
         e = realloc(e, sizeof(struct CommissionEmployee)); // resize original pointer. (not needed for program to work)
-        e = (struct CommissionEmployee*) c; // have Employee pointer of new size point to CommissionEmployee pointer.
+        e = (void*) c; // have Employee pointer of new size point to CommissionEmployee pointer.
     }
     else{
         struct SeniorSalesman *s = malloc(sizeof(struct SeniorSalesman));
@@ -161,7 +161,7 @@ int main(){
         s->sales_amount = sales_amount;
         // Memory management.
         e = realloc(e, sizeof(struct SeniorSalesman)); // resize original pointer. (not needed for program to work)
-        e = (struct SeniorSalesman*) s; // have Employee pointer of new size point to SeniorSalesman.
+        e = (void*) s; // have Employee pointer of new size point to SeniorSalesman.
     }
 
     // function pointer calls using vtable to allow for dynamic dispatch.

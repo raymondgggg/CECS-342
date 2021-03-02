@@ -3,7 +3,7 @@
  * Purpose: Illustrate the dynamic dispatch that is often taken for granted in OO languages :)
  * Language:  C
  * Compiler: GCC 
- * NOTE: Because this code was compiled with GCC on Linux, certain parts may not work with other compilers on other OS
+ * NOTE: Because this code was compiled with GCC on Pop!_OS, certain parts may not work with other compilers on other OS
  * (e.g scanf translates to scanf_s in visual studio on windows).
  */
 #include <stdio.h>

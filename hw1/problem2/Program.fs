@@ -22,5 +22,7 @@ let sumPrimes max =
 
 [<EntryPoint>]
 let main argv =
+    let x = 1
+    let z = x + 2.5
     printfn "The sum of all the primes up till 2 million is: %.2f" (sumPrimes (float (2000000)))
-    0 // return an integer exit code
+    0 // return`an integer exit code

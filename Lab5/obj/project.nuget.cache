@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "ftStpM5ZOC4h5om0KbQKoIcmVKlc5Rsp7QjR4G44Wh7i5WgEhTdyFrOPB+GyVuF9ztX9jD3WLFe4OCEV4k+nOg==",
+  "success": true,
+  "projectFilePath": "/home/raymond/programming/F#/CECS-342/Suffixes/Suffixes.fsproj",
+  "expectedPackageFiles": [
+    "/home/raymond/.nuget/packages/fsharp.core/5.0.0/fsharp.core.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

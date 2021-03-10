@@ -59,6 +59,7 @@ let simplifyBank customerList nameList =
                 simplifyBank' customerList (List.tail names) ({Name = List.head names; Account = Balance newAcctAmount}::simplifiedList)
             else
                 simplifyBank' customerList (List.tail names) ({Name = List.head names; Account = Empty}::simplifiedList)
+                
     let solution = List.rev (simplifyBank' customerList nameList [])
     solution
   

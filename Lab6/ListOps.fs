@@ -16,6 +16,7 @@ let makeCustomerWithBalance name (amount: int) =
         else
             Empty
 
+
     { Name = name; Account = account }
 
 let unknownCustomer = makeCustomerWithBalance "Unknown" 0
@@ -36,7 +37,6 @@ let totalOverdrawn name coll =
     // get the sum and return it              
     let totalSum = getOverdrawnSum filteredList 0
     totalSum
-
 
 let maxBalance name coll = 
     // filter the list to only have the customers of the name we passed in

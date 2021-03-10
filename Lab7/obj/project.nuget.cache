@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "+10HpVDxdzO4ldA9tkUFwM/pK/hDujS5k0LhQjd2fuNDKiVu37zan5LA5rMO2cEUHupdzPKoky/Xu/tLwHZXrA==",
+  "success": true,
+  "projectFilePath": "/home/raymond/programming/F#/CECS-342/Lab7/Fold.fsproj",
+  "expectedPackageFiles": [
+    "/home/raymond/.nuget/packages/fsharp.core/5.0.0/fsharp.core.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "9462Jb0qi4nB6L+PRK3zfiyd17x9+yqsvzEHVrwu2UAfS79xiGpR/sIYNCtXeboaDHJBYiTQ6debxwZjjxghJQ==",
+  "success": true,
+  "projectFilePath": "/home/raymond/programming/F#/CECS-342/Blackjack/Blackjack.fsproj",
+  "expectedPackageFiles": [
+    "/home/raymond/.nuget/packages/fsharp.core/5.0.0/fsharp.core.5.0.0.nupkg.sha512",
+    "/home/raymond/.nuget/packages/microsoft.netcore.app.ref/3.1.0/microsoft.netcore.app.ref.3.1.0.nupkg.sha512",
+    "/home/raymond/.nuget/packages/microsoft.aspnetcore.app.ref/3.1.10/microsoft.aspnetcore.app.ref.3.1.10.nupkg.sha512",
+    "/home/raymond/.nuget/packages/microsoft.netcore.app.host.linux-x64/3.1.13/microsoft.netcore.app.host.linux-x64.3.1.13.nupkg.sha512"
+  ],
+  "logs": []
+}

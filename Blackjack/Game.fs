@@ -70,7 +70,13 @@ let cardToString card =
 
     // "%A" can print any kind of object, and automatically converts a union (like CardSuit)
     // into a simple string.
-    sprintf "%s of %A" kind card.suit
+    match kind with 
+    | "1" -> sprintf "Ace of %A" card.suit
+    | "11" -> sprintf "Jack of %A" card.suit
+    | "12" -> sprintf "Queen of %A" card.suit
+    | "13" -> sprintf "King of %A" card.suit
+    | _ -> sprintf "%s of %A" kind card.suit
+    
 
 
 // Returns a string describing the cards in a hand.    
@@ -79,7 +85,10 @@ let handToString hand =
     // The string consists of the results of cardToString when called on each Card in the hand (a Card list),
     // separated by commas. You need to build this string yourself; the built-in "toString" methods for lists
     // insert semicolons and square brackets that I do not want.
-    sprintf "%A" hand
+
+    let stringList = List.map (cardToString) hand 
+    let handString = String.concat ", " stringList
+    sprintf "%A" handString
 
     // Hint: transform each card in the hand to its cardToString representation. Then read the documentation
     // on String.concat.
@@ -105,11 +114,11 @@ let cardValue card =
 let handTotal hand =
     // TODO: modify the next line to calculate the sum of the card values of each
     // card in the list. Hint: List.map and List.sum. (Or, if you're slick, List.sumBy)
-    let sum = 0
+    let sum = List.sumBy cardValue hand
 
     // TODO: modify the next line to count the number of aces in the hand.
     // Hint: List.filter and List.length. 
-    let numAces = 0
+    let numAces = List.length (List.filter (fun card -> card.kind = 1) hand)
 
     // Adjust the sum if it exceeds 21 and there are aces.
     if sum <= 21 then
@@ -186,9 +195,18 @@ let hit handOwner gameState =
         // Then update the player's active hands so that the new first hand is head of the list; and the
         //     other (unchanged) active hands follow it.
         // Then construct the new game state with the updated deck and updated player.
-
-        // TODO: this is just so the code compiles; fix it.
-        gameState
+        let currentHand = gameState.player.activeHands 
+                          |> List.head 
+        let currentPlayerState = gameState.player
+        let remainingHands = gameState.player.activeHands
+                             |> List.tail 
+        let newCardList = topCard :: currentHand.cards
+        let newHand = {currentHand with cards = newCardList}
+        let newPlayerState = {currentPlayerState with activeHands = newHand :: remainingHands}
+        {gameState with deck = newDeck; 
+                        player = newPlayerState}
+        
+        
 
 
 // Take the dealer's turn by repeatedly taking a single action, hit or stay, until 
@@ -241,9 +259,16 @@ let rec playerTurn (playerStrategy : GameState->PlayerAction) (gameState : GameS
         // TODO: print the player's first active hand. Call the strategy to get a PlayerAction.
         // Create a new game state based on that action. Recurse if the player can take another action 
         // after their chosen one, or return the game state if they cannot.
+        printfn $"First active hand: {handToString (List.head playerState.activeHands).cards}"
+        let newPlayerAction = playerStrategy gameState
+        //fix the remainder of this match expression when I implement the different strategies!!!!
+        match newPlayerAction with
+        | Hit -> playerTurn playerStrategy (hit Player gameState)
+        | Stand -> gameState
+        | Split -> gameState
+        | DoubleDown -> gameState
+
         
-        // Remove this when you're ready; it's just so the code compiles.
-        gameState
                         
 
 
@@ -328,7 +353,6 @@ let rec interactivePlayerStrategy gameState =
     | _ -> printfn "Please choose one of the available options, dummy."
            interactivePlayerStrategy gameState
 
-    
 open Blackjack
 
 [<EntryPoint>]
@@ -339,10 +363,37 @@ let main argv =
     //|> MyBlackjack.oneGame MyBlackjack.recklessPlayer
     //|> printfn "%A"
 
-    Blackjack.manyGames 1000 Blackjack.coinFlipPlayerStrategy
-    |> printfn "%A"
+    let deck1 = shuffleDeck (makeDeck ())
+    
+    let cards1 = [{suit = Diamonds; kind = 5}; {suit = Spades; kind = 5}; {suit = Hearts; kind = 3};]
+    let cards2 = [{suit = Diamonds; kind = 6}; {suit = Spades; kind = 3}; {suit = Hearts; kind = 5};]
+
+    let pHand1 = {cards = cards1; doubled = false}
+    let phand2 = {cards = cards2; doubled = false}
+    let activeHands1 = [phand2; pHand1]
+    let pState = {activeHands = activeHands1; finishedHands = []}
+    let dealer = [{suit = Spades; kind = 4}; {suit = Spades; kind = 5}; {suit = Clubs; kind = 8};]
+
+    let gameState = {deck = deck1; player = pState; dealer = dealer}
+
+    let gameState2 = hit Player gameState
+    
+    printfn "Facts:"
+    printfn $"Deck size: {List.length  gameState.deck}"
+    printfn $"{gameState}"
+    printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    printfn $"Deck size: {List.length  gameState2.deck}"
+    printfn $"{gameState2}"
+
+
+
+    
+    
+
+
+
+    // Blackjack.manyGames `000 Blackjack.coinFlipPlayerStrategy
+    // |> printfn "%A"
     // TODO: call manyGames to run 1000 games with a particular strategy.
 
     0 // return an integer exit code
-
-

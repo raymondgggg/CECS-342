@@ -76,8 +76,6 @@ let cardToString card =
     | "12" -> sprintf "Queen of %A" card.suit
     | "13" -> sprintf "King of %A" card.suit
     | _ -> sprintf "%s of %A" kind card.suit
-    
-
 
 // Returns a string describing the cards in a hand.    
 let handToString hand =
@@ -92,8 +90,6 @@ let handToString hand =
 
     // Hint: transform each card in the hand to its cardToString representation. Then read the documentation
     // on String.concat.
-
-
     
 // Returns the "value" of a card in a poker hand, where all three "face" cards are worth 10
 // and an Ace has a value of 11.
@@ -104,7 +100,6 @@ let cardValue card =
     | n -> n
     
     // Reminder: the result of the match will be returned
-
 
 // Calculates the total point value of the given hand (Card list). 
 // Find the sum of the card values of each card in the hand. If that sum
@@ -148,7 +143,6 @@ let makeDeck () =
                                    | 3 -> Hearts
                            {suit = s; kind = i % 13 + 1})
 
-
 // Shuffles a list by converting it to an array, doing an in-place Fisher-Yates 
 // shuffle, then converting back to a list.
 // Don't worry about this.
@@ -163,7 +157,6 @@ let shuffleDeck deck =
     Array.iteri (fun i _ -> swap arr i (rand.Next(i, Array.length arr))) arr
     Array.toList arr
 
-
 // Creates a new game state using the given deck, dealing 2 cards to the player and dealer.
 let newGame (deck : Card list) =
     // Construct the starting hands for player and dealer.
@@ -175,7 +168,6 @@ let newGame (deck : Card list) =
     // the initial player has only one active hand.
      player = {activeHands = [{cards = playerCards; doubled = false}]; finishedHands = []}
      dealer = dealerCards}
-
 
 // Given a current game state and an indication of which player is "hitting", deal one
 // card from the deck and add it to the given person's hand. Return the new game state.
@@ -206,9 +198,6 @@ let hit handOwner gameState =
         {gameState with deck = newDeck; 
                         player = newPlayerState}
         
-        
-
-
 // Take the dealer's turn by repeatedly taking a single action, hit or stay, until 
 // the dealer busts or stays.
 let rec dealerTurn gameState =
@@ -235,7 +224,6 @@ let rec dealerTurn gameState =
         // The dealer does not get to take another action.
         printfn "Dealer must stay"
         gameState
-
 
 // My own functs
 let moveActiveHand gameState = 
@@ -294,8 +282,6 @@ let rec playerTurn (playerStrategy : GameState->PlayerAction) (gameState : GameS
         | Split -> gameState
         | DoubleDown -> gameState
 
-        
-
 // Plays one game with the given player strategy. Returns a GameLog recording the winner of the game.
 let oneGame playerStrategy gameState =
     // TODO: print the first card in the dealer's hand to the screen, because the Player can see
@@ -343,6 +329,8 @@ let oneGame playerStrategy gameState =
                 elif handResult = Draw then
                     getGameLog (List.tail handsToCheck) dealerHand {gameLog with draws = currentDraws + 1}
 
+                elif handResult = Lose && (List.head handsToCheck).doubled = true then
+                    getGameLog (List.tail handsToCheck) dealerHand {gameLog with dealerWins = currentDWins + 2}
                 else
                     getGameLog (List.tail handsToCheck) dealerHand {gameLog with dealerWins = currentDWins + 1}
         // TODO: this is a "blank" GameLog. Return something more appropriate for each of the outcomes
@@ -355,9 +343,24 @@ let manyGames n playerStrategy =
     // TODO: run oneGame with the playerStrategy n times, and accumulate the result. 
     // If you're slick, you won't do any recursion yourself. Instead read about List.init, 
     // and then consider List.reduce.
-    
+    let gameResults = List.init n (fun n -> oneGame playerStrategy (newGame (makeDeck () |> shuffleDeck )))
+    let combineGameLogs logs = 
+        let combineLogs elem1 elem2 = 
+            let currentPlayerWins = elem1.playerWins
+            let currentDealerWins = elem1.dealerWins
+            let currentDraws = elem1.draws
+            match elem2 with
+            | {playerWins = p; dealerWins = 0; draws = 0} -> {elem1 with playerWins = currentPlayerWins + p}
+            | {playerWins = 0; dealerWins = 0; draws = dr} -> {elem1 with draws = currentDraws + dr}
+            | {dealerWins = d} -> {elem1 with dealerWins = currentDealerWins + d}
+
+        List.reduce combineLogs logs
+
+    combineGameLogs gameResults
+    // List.reduce (+) gameResults
+      
     // TODO: this is a "blank" GameLog. Return something more appropriate.
-    {playerWins = 0; dealerWins = 0; draws = 0}
+    // {playerWins = 0; dealerWins = 0; draws = 0}
   
 // PLAYER STRATEGIES
 // Returns a list of legal player actions given their current hand.
@@ -374,7 +377,6 @@ let legalPlayerActions playerHand =
     List.zip legalActions requirements // zip the actions with the boolean results of whether they're legal
     |> List.filter (fun (_, req) -> req) // if req is true, the action can be taken
     |> List.map (fun (act, _) -> act) // return the actions whose req was true
-
 
 // Get a nice printable string to describe an action.
 let actionToString = function
@@ -403,6 +405,24 @@ let rec interactivePlayerStrategy gameState =
     | _ -> printfn "Please choose one of the available options, dummy."
            interactivePlayerStrategy gameState
 
+let inactivePlayerStrategy (gamestate:GameState) =
+    Stand
+
+let greedyPlayerStrategy (gameState:GameState) = 
+    if handTotal ((List.head gameState.player.activeHands).cards) >= 21 then
+        Stand
+    else
+        Hit
+
+let coinFlipPlayerStrategy (gameState:GameState )  = 
+    let choice = rand.Next(2)
+    match choice with
+    | 0 -> Hit //heads
+    | _ -> Stand //tails (value of 1)
+
+// let basicPlayerStrategy (gameState:GameState) = 
+
+
 open Blackjack
 
 [<EntryPoint>]
@@ -427,8 +447,9 @@ let main argv =
 
     let gameState = {deck = deck1; player = pState; dealer = dealer}
 
-    let x = oneGame interactivePlayerStrategy gameState
-    printfn $"{x}"
+    let nGames = manyGames 10 inactivePlayerStrategy
+
+    printfn $"{nGames}"
 
     // printfn $"{gameState}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
     // printfn $"{moveAllActiveHands gameState}"

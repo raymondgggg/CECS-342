@@ -1,26 +1,21 @@
 module ListOps
 
-// Implement the functions described below making use of List.fold at least once
-// in each function.
+// Implement the functions described below -- you must use the option type to
+// solve this problem. See the [API docs] for more information.
+//
+// [API docs]: https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-optionmodule.html
 //
 // Your implementation should use:
 // - pattern matching
-// - List.map, List.filter, and / or List.reduce
+// - List.map / List.filter where needed
 // - anonymous functions
 //
-// Your implementation should not use:
+// Your implementation must not use:
 // - mutation
 // - while loops
 // - List.append
 // - the '@' operator to concatenate lists
-
-
-// Given a list of strings and a separator, create a new string that is
-// delimited with the separator (in the style of str.join from python).
-//
-// Example:
-// assert ("this is a sentence." = join " " [ "this"; "is"; "a"; "sentence." ])
-val join : string -> string list -> string
+// - if / else
 
 type Account =
     | Overdrawn of int
@@ -29,19 +24,14 @@ type Account =
 
 type Customer = { Name: string; Account: Account }
 
+// Same prompt as before:
 // Given a list of customers and a list of names, simplify the list of customers
 // such that each name in the string list only appears in the final customer
 // list one time.
 //
-// For example, if Jane appears in the customer list 3 times as:
-//   { Name = "Jane"; Account = Balance 100 }
-//   { Name = "Jane"; Account = Overdrawn 100 }
-//   { Name = "Jane"; Account = Balance 100 }
+// ... but this time the names might not exist in the Customer list. How can you
+// solve this problem with the option type?
 //
-// Jane's account can be simplified to:
-//   { Name = "Jane"; Account = Balance 100 }
-//
-// Full example:
 // let bank =
 //     [ { Name = "Jane"; Account = Balance 100 }
 //       { Name = "Joe"; Account = Overdrawn 200 }
@@ -50,7 +40,7 @@ type Customer = { Name: string; Account: Account }
 //       { Name = "Jane"; Account = Balance 100 }
 //       { Name = "Joe"; Account = Balance 50 } ]
 //
-// let names = [ "Jane"; "Joe" ]
+// let names = [ "Unknown customer"; "Jane"; "Joe" ]
 //
 // assert ((simplifyBank bank names) = ([ { Name = "Jane"; Account = Balance 100 }
 //                                        { Name = "Joe"; Account = Overdrawn 150 } ]))

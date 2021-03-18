@@ -23,34 +23,32 @@ let deposit amount acc =
     | Overdrawn n when n - amount < 0 -> Balance(abs (n - amount))
     | Overdrawn _ -> Empty
 
-
 let join str strList =
     let str = List.fold (fun acc elem -> acc + elem + str) "" strList
-    str.[0..String.length str-2] // return everything up until the second to last element
-
+    str.[0..String.length str-2] // return everything up until the second to last char in the string.
 
 let simplifyBank customerList nameList = 
     let rec simplifyBank' customerList names simplifiedList =
         if (List.length names = 0) then
             simplifiedList
         else    
-            let filteredName = List.filter (fun customer -> customer.Name = List.head names) customerList
-            let balanceAccts = 
+            let filteredName = List.filter (fun customer -> customer.Name = List.head names) customerList 
+            let balanceAcctsVals = 
                 filteredName |> List.choose(fun customer ->
                                 match customer.Account with
                                 | Balance b -> Some(b)
                                 | Empty -> None
                                 | Overdrawn o -> None)
 
-            let overdrawnAccts = 
+            let overdrawnAcctsVals = 
                 filteredName |> List.choose(fun customer ->
                                 match customer.Account with
                                 | Overdrawn o -> Some(o)
                                 | Empty -> None
                                 | Balance b -> None)
 
-            let blanceSum = List.sum balanceAccts
-            let overdrawnSum = List.sum overdrawnAccts
+            let blanceSum = List.sum balanceAcctsVals
+            let overdrawnSum = List.sum overdrawnAcctsVals
             let newAcctAmount = blanceSum - overdrawnSum
             
             if newAcctAmount < 0 then
@@ -59,7 +57,6 @@ let simplifyBank customerList nameList =
                 simplifyBank' customerList (List.tail names) ({Name = List.head names; Account = Balance newAcctAmount}::simplifiedList)
             else
                 simplifyBank' customerList (List.tail names) ({Name = List.head names; Account = Empty}::simplifiedList)
-                
+
     let solution = List.rev (simplifyBank' customerList nameList [])
     solution
-  

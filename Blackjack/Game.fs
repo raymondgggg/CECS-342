@@ -235,8 +235,34 @@ let rec dealerTurn gameState =
         // The dealer does not get to take another action.
         printfn "Dealer must stay"
         gameState
-        
 
+
+// My own functs
+let moveActiveHand gameState = 
+    let playerState = gameState.player
+    let topActive = playerState.activeHands |> List.head
+    let remainingHands = playerState.activeHands |> List.tail
+    let newPlayerState = {playerState with activeHands = remainingHands;
+                                            finishedHands = topActive :: playerState.finishedHands}
+    {gameState with player = newPlayerState}
+
+let rec moveAllActiveHands gamestate = 
+    if List.length gamestate.player.activeHands = 0 then
+        gamestate
+    else 
+        moveAllActiveHands (moveActiveHand gamestate) 
+
+let classify playerHand dealerHand =
+    let playerScore = handTotal playerHand.cards
+    let dealerScore = handTotal dealerHand
+
+    match playerScore with
+    | playerScore when playerScore = dealerScore -> Draw
+    | playerScore when playerScore > 21 -> Lose
+    | playerScore when playerScore < dealerScore -> Lose
+    | _ -> Win
+// My own functs
+    
 // Take the player's turn by repeatedly taking a single action until they bust or stay.
 let rec playerTurn (playerStrategy : GameState->PlayerAction) (gameState : GameState) =
     // TODO: code this method using dealerTurn as a guide. Follow the same standard
@@ -269,46 +295,70 @@ let rec playerTurn (playerStrategy : GameState->PlayerAction) (gameState : GameS
         | DoubleDown -> gameState
 
         
-                        
-
 
 // Plays one game with the given player strategy. Returns a GameLog recording the winner of the game.
 let oneGame playerStrategy gameState =
     // TODO: print the first card in the dealer's hand to the screen, because the Player can see
     // one card from the dealer's hand in order to make their decisions.
-    printfn "Dealer is showing: %A" 0 // fix this line
+    printfn "Dealer is showing: %A"  (List.head gameState.dealer) // fix this line
 
-    printfn "Player's turn"
-    // TODO: play the game! First the player gets their turn. The dealer then takes their turn,
-    // using the state of the game after the player's turn finished.
-
-    printfn "\nDealer's turn"
+    if handTotal gameState.dealer = 21 then
+        if handTotal (gameState.player.activeHands |> List.head).cards = 21 then
+            {playerWins = 0; dealerWins = 0; draws = 1}
+        else
+            {playerWins = 0; dealerWins = 1; draws = 0}
     
-    // TODO: determine the winner(s)! For each of the player's hands, determine if that hand is a 
-    // win, loss, or draw. Accumulate (!!) the sum total of wins, losses, and draws, accounting for doubled-down
-    // hands, which gets 2 wins, 2 losses, or 1 draw
-    
-    // The player wins a hand if they did not bust (score <= 21) AND EITHER:
-    // - the dealer busts; or
-    // - player's score > dealer's score
-    // If neither side busts and they have the same score, the result is a draw.
+    else
+        printfn "Player's turn"
+        // TODO: play the game! First the player gets their turn. The dealer then takes their turn,
+        // using the state of the game after the player's turn finished.
+        let afterPlayerState = playerTurn playerStrategy gameState
 
-    // TODO: this is a "blank" GameLog. Return something more appropriate for each of the outcomes
-    // described above.
-    {playerWins = 0; dealerWins = 0; draws = 0}
+        printfn "\nDealer's turn"
+        let afterDealerState = dealerTurn afterPlayerState
 
+        // TODO: determine the winner(s)! For each of the player's hands, determine if that hand is a 
+        // win, loss, or draw. Accumulate (!!) the sum total of wins, losses, and draws, accounting for doubled-down
+        // hands, which gets 2 wins, 2 losses, or 1 draw
+
+        // The player wins a hand if they did not bust (score <= 21) AND EITHER:
+        // - the dealer busts; or
+        // - player's score > dealer's score
+        // If neither side busts and they have the same score, the result is a draw.
+       
+        let rec getGameLog handsToCheck dealerHand gameLog = 
+            let currentPWins = gameLog.playerWins
+            let currentDWins = gameLog.dealerWins
+            let currentDraws = gameLog.draws
+            if List.length handsToCheck = 0 then
+                gameLog
+            else
+                let handResult = classify (List.head handsToCheck) dealerHand
+                if handResult = Win then
+                    getGameLog (List.tail handsToCheck) dealerHand {gameLog with playerWins = currentPWins + 1}
+
+                elif handResult = Win && (List.head handsToCheck).doubled = true then
+                    getGameLog (List.tail handsToCheck) dealerHand {gameLog with playerWins = currentPWins + 2}
+
+                elif handResult = Draw then
+                    getGameLog (List.tail handsToCheck) dealerHand {gameLog with draws = currentDraws + 1}
+
+                else
+                    getGameLog (List.tail handsToCheck) dealerHand {gameLog with dealerWins = currentDWins + 1}
+        // TODO: this is a "blank" GameLog. Return something more appropriate for each of the outcomes
+        // described above.
+        let handsToCheck' = (moveAllActiveHands afterDealerState).player.finishedHands
+        getGameLog handsToCheck' afterDealerState.dealer {playerWins = 0; dealerWins = 0; draws = 0}
 
 // Plays n games using the given playerStrategy, and returns the combined game log.
 let manyGames n playerStrategy =
     // TODO: run oneGame with the playerStrategy n times, and accumulate the result. 
     // If you're slick, you won't do any recursion yourself. Instead read about List.init, 
     // and then consider List.reduce.
-
+    
     // TODO: this is a "blank" GameLog. Return something more appropriate.
     {playerWins = 0; dealerWins = 0; draws = 0}
-            
-
-        
+  
 // PLAYER STRATEGIES
 // Returns a list of legal player actions given their current hand.
 let legalPlayerActions playerHand =
@@ -365,6 +415,7 @@ let main argv =
 
     let deck1 = shuffleDeck (makeDeck ())
     
+    
     let cards1 = [{suit = Diamonds; kind = 5}; {suit = Spades; kind = 5}; {suit = Hearts; kind = 3};]
     let cards2 = [{suit = Diamonds; kind = 6}; {suit = Spades; kind = 3}; {suit = Hearts; kind = 5};]
 
@@ -376,14 +427,19 @@ let main argv =
 
     let gameState = {deck = deck1; player = pState; dealer = dealer}
 
-    let gameState2 = hit Player gameState
-    
-    printfn "Facts:"
-    printfn $"Deck size: {List.length  gameState.deck}"
-    printfn $"{gameState}"
-    printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-    printfn $"Deck size: {List.length  gameState2.deck}"
-    printfn $"{gameState2}"
+    let x = oneGame interactivePlayerStrategy gameState
+    printfn $"{x}"
+
+    // printfn $"{gameState}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    // printfn $"{moveAllActiveHands gameState}"
+
+    // printfn $"{classify pHand1 cards2}"
+    // printfn "Facts:"
+    // printfn $"Deck size: {List.length  gameState.deck}"
+    // printfn $"{gameState}"
+    // printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    // printfn $"Deck size: {List.length  gameState2.deck}"
+    // printfn $"{gameState2}"
 
 
 

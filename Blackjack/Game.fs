@@ -195,8 +195,7 @@ let hit handOwner gameState =
         let newCardList = topCard :: currentHand.cards
         let newHand = {currentHand with cards = newCardList}
         let newPlayerState = {currentPlayerState with activeHands = newHand :: remainingHands}
-        {gameState with deck = newDeck; 
-                        player = newPlayerState}
+        {gameState with deck = newDeck; player = newPlayerState}
         
 // Take the dealer's turn by repeatedly taking a single action, hit or stay, until 
 // the dealer busts or stays.
@@ -276,17 +275,38 @@ let rec playerTurn (playerStrategy : GameState->PlayerAction) (gameState : GameS
         printfn $"First active hand: {handToString (List.head playerState.activeHands).cards}"
         let newPlayerAction = playerStrategy gameState
         //fix the remainder of this match expression when I implement the different strategies!!!!
+
+        // Still todo: make sure that you return a gameState that corresponds to the action taken
+        // Meaning that: the active hand is moved to finished hand, the bool flag for double 
+        // is set if needed, the player's hand has a new card when they hit.
+        // split the cards and have multiple active hands (program that game logic)
+        // Use helper methods where I pass in a gameState and the gameState gets modified and 
+        // returned according to the action that I matched with.
+        let chooseSplit gameState = 
+            let splitVal = List.distinct (List.head gameState.player.activeHands).cards
+            let newHands = {List.head gameState.player.activeHands with cards = splitVal}
+            let newPlayerState = {playerState with 
+                                                activeHands = newHands :: newHands :: List.tail gameState.player.activeHands}
+            {gameState with player = newPlayerState}
+
+        let chooseDoubleDown gameState = 
+            let newGameState = hit Player gameState
+            let handUpdate = {List.head newGameState.player.activeHands with doubled = true}
+            let remainingHands = List.tail newGameState.player.activeHands
+            let updatePState = {newGameState.player with activeHands = handUpdate :: remainingHands}
+            moveActiveHand {newGameState with player = updatePState}
+
         match newPlayerAction with
-        | Hit -> playerTurn playerStrategy (hit Player gameState)
-        | Stand -> gameState
-        | Split -> gameState
-        | DoubleDown -> gameState
+        | Hit -> moveActiveHand (hit Player gameState)
+        | Stand -> moveActiveHand gameState
+        | Split -> chooseSplit gameState
+        | DoubleDown -> chooseDoubleDown gameState
 
 // Plays one game with the given player strategy. Returns a GameLog recording the winner of the game.
 let oneGame playerStrategy gameState =
     // TODO: print the first card in the dealer's hand to the screen, because the Player can see
     // one card from the dealer's hand in order to make their decisions.
-    printfn "Dealer is showing: %A"  (List.head gameState.dealer) // fix this line
+    printfn "Dealer is showing: %A"  (cardToString (List.head gameState.dealer)) // fix this line
 
     if handTotal gameState.dealer = 21 then
         if handTotal (gameState.player.activeHands |> List.head).cards = 21 then
@@ -414,63 +434,85 @@ let greedyPlayerStrategy (gameState:GameState) =
     else
         Hit
 
-let coinFlipPlayerStrategy (gameState:GameState )  = 
+let coinFlipPlayerStrategy (gameState:GameState)  = 
     let choice = rand.Next(2)
     match choice with
     | 0 -> Hit //heads
     | _ -> Stand //tails (value of 1)
 
-// let basicPlayerStrategy (gameState:GameState) = 
+let basicPlayerStrategy gameState =
+    let activeHand = List.head gameState.player.activeHands
+    let card1 = List.head (activeHand.cards)
+    let card2 = List.head (List.tail activeHand.cards)
+    let handSum = handTotal activeHand.cards
+    let dealerTopCard = cardValue (List.head gameState.dealer)
 
+    if (handSum = 10 && dealerTopCard < 10) || handSum = 11 || (handSum = 9 && dealerTopCard <> 2) || (handSum = 9 && dealerTopCard < 7) then
+        DoubleDown
+    elif (handSum = 10 && dealerTopCard >= 10) || (handSum = 9 && dealerTopCard = 2) || (handSum = 9 && dealerTopCard >= 7) then
+        Hit
+    elif cardValue card1 = cardValue card2 && handSum < 20 then
+        Split
+    elif (cardValue card1 = cardValue card2 && handSum >= 20) then
+        Stand
+    else
+        let dealerRange1 = [2..6]
+        let dealerRange2 = [7..10]
+
+        if handSum > 12 && List.contains dealerTopCard dealerRange1 then
+            Stand
+        elif handSum < 12 && List.contains dealerTopCard dealerRange1 then
+            Hit
+        elif handSum <= 16 && List.contains dealerTopCard dealerRange2 then
+            Hit
+        elif handSum >= 16 && List.contains dealerTopCard dealerRange2 then
+            Stand
+        else
+            let rec hasAce playerHand = 
+                match playerHand.cards with
+                | [] -> false
+                | head::tail when cardValue head = 11 -> true
+                | _ -> hasAce ({playerHand with cards = List.tail playerHand.cards})
+
+            if handSum <= 16 && hasAce activeHand = true then
+                Hit
+            elif handSum <= 11 then
+                Hit
+            else
+                Stand
 
 open Blackjack
 
 [<EntryPoint>]
 let main argv =
-    //MyBlackjack.makeDeck() 
-    //|> MyBlackjack.shuffleDeck
-    //|> MyBlackjack.newGame
-    //|> MyBlackjack.oneGame MyBlackjack.recklessPlayer
-    //|> printfn "%A"
+    // Blackjack.makeDeck () 
+    // |> Blackjack.shuffleDeck
+    // |> Blackjack.newGame
+    // |> Blackjack.oneGame Blackjack.recklessPlayer
+    // |> printfn "%A"
 
-    let deck1 = shuffleDeck (makeDeck ())
+    // let deck1 = shuffleDeck (makeDeck ())
     
     
-    let cards1 = [{suit = Diamonds; kind = 5}; {suit = Spades; kind = 5}; {suit = Hearts; kind = 3};]
-    let cards2 = [{suit = Diamonds; kind = 6}; {suit = Spades; kind = 3}; {suit = Hearts; kind = 5};]
+    // let cards1 = [{suit = Diamonds; kind = 5}; {suit = Spades; kind = 5}; {suit = Hearts; kind = 3};]
+    // let cards2 = [{suit = Diamonds; kind = 6}; {suit = Spades; kind = 3}; {suit = Hearts; kind = 5};]
 
-    let pHand1 = {cards = cards1; doubled = false}
-    let phand2 = {cards = cards2; doubled = false}
-    let activeHands1 = [phand2; pHand1]
-    let pState = {activeHands = activeHands1; finishedHands = []}
-    let dealer = [{suit = Spades; kind = 4}; {suit = Spades; kind = 5}; {suit = Clubs; kind = 8};]
+    // let pHand1 = {cards = cards1; doubled = false}
+    // let phand2 = {cards = cards2; doubled = false}
+    // let activeHands1 = [phand2; pHand1]
+    // let pState = {activeHands = activeHands1; finishedHands = []}
+    // let dealer = [{suit = Spades; kind = 4}; {suit = Spades; kind = 5}; {suit = Clubs; kind = 8};]
 
-    let gameState = {deck = deck1; player = pState; dealer = dealer}
+    // let gameState = {deck = deck1; player = pState; dealer = dealer}
 
-    let nGames = manyGames 10 inactivePlayerStrategy
+    // let nGames = manyGames 1000 inactivePlayerStrategy
+    // let nGames = manyGames 1000 greedyPlayerStrategy
+    // let nGames = manyGames 1000 coinFlipPlayerStrategy
+    let nGames = manyGames 1000 basicPlayerStrategy
 
     printfn $"{nGames}"
-
-    // printfn $"{gameState}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-    // printfn $"{moveAllActiveHands gameState}"
-
-    // printfn $"{classify pHand1 cards2}"
-    // printfn "Facts:"
-    // printfn $"Deck size: {List.length  gameState.deck}"
-    // printfn $"{gameState}"
-    // printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-    // printfn $"Deck size: {List.length  gameState2.deck}"
-    // printfn $"{gameState2}"
-
-
-
-    
     
 
-
-
-    // Blackjack.manyGames `000 Blackjack.coinFlipPlayerStrategy
-    // |> printfn "%A"
     // TODO: call manyGames to run 1000 games with a particular strategy.
 
     0 // return an integer exit code

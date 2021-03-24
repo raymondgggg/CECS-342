@@ -272,35 +272,52 @@ module MyBlackjack =
             // TODO: print the player's first active hand. Call the strategy to get a PlayerAction.
             // Create a new game state based on that action. Recurse if the player can take another action 
             // after their chosen one, or return the game state if they cannot.
-            printfn $"First active hand: {handToString (List.head playerState.activeHands).cards}"
-            let newPlayerAction = playerStrategy gameState
-            //fix the remainder of this match expression when I implement the different strategies!!!!
+            let pScore = handTotal ((List.head playerState.activeHands).cards)
+            printfn $"First active hand: {handToString (List.head playerState.activeHands).cards}; points {pScore}"
 
-            // Still todo: make sure that you return a gameState that corresponds to the action taken
-            // Meaning that: the active hand is moved to finished hand, the bool flag for double 
-            // is set if needed, the player's hand has a new card when they hit.
-            // split the cards and have multiple active hands (program that game logic)
-            // Use helper methods where I pass in a gameState and the gameState gets modified and 
-            // returned according to the action that I matched with.
-            let chooseSplit gameState = 
-                let splitVal = List.distinct (List.head gameState.player.activeHands).cards
-                let newHands = {List.head gameState.player.activeHands with cards = splitVal}
-                let newPlayerState = {playerState with 
-                                                    activeHands = newHands :: newHands :: List.tail gameState.player.activeHands}
-                {gameState with player = newPlayerState}
+            if pScore = 21 then
+                printfn "natural blackjack"
+                gameState
+            elif pScore > 21 then
+                printfn "player busts"
+                gameState
+            else
+                let newPlayerAction = playerStrategy gameState
 
-            let chooseDoubleDown gameState = 
-                let newGameState = hit Player gameState
-                let handUpdate = {List.head newGameState.player.activeHands with doubled = true}
-                let remainingHands = List.tail newGameState.player.activeHands
-                let updatePState = {newGameState.player with activeHands = handUpdate :: remainingHands}
-                moveActiveHand {newGameState with player = updatePState}
+                let chooseSplit gameState = 
+                    let splitHand = List.distinct (List.head gameState.player.activeHands).cards
+                    let deckCard1 = List.head gameState.deck
+                    let deckCard2 = List.tail gameState.deck |> List.head
+                    let newDeck = List.tail gameState.deck |> List.tail
 
-            match newPlayerAction with
-            | Hit -> moveActiveHand (hit Player gameState)
-            | Stand -> moveActiveHand gameState
-            | Split -> chooseSplit gameState
-            | DoubleDown -> chooseDoubleDown gameState
+                    let card1 = [List.head splitHand]
+                    let card2 = List.tail splitHand
+                    let hand1 = {List.head gameState.player.activeHands with cards = deckCard1 :: card1}
+                    let hand2 = {List.head gameState.player.activeHands with cards = deckCard2 :: card2}
+                    let newPlayerState = {gameState.player with 
+                                                            activeHands = hand1  :: hand2 :: (List.tail gameState.player.activeHands)}
+                    {gameState with player = newPlayerState
+                                    deck = newDeck}
+      
+                let chooseDoubleDown gameState = 
+                    let newGameState = hit Player gameState
+                    let handUpdate = {List.head newGameState.player.activeHands with doubled = true}
+                    let remainingHands = List.tail newGameState.player.activeHands
+                    let updatePState = {newGameState.player with activeHands = handUpdate :: remainingHands}
+                    moveActiveHand {newGameState with player = updatePState}
+
+                match newPlayerAction with
+                | Hit -> printfn "Player Hits" 
+                         playerTurn playerStrategy (hit Player gameState |> moveActiveHand)
+
+                | Stand -> printfn "PlayerStands" 
+                           playerTurn playerStrategy (moveActiveHand gameState)
+
+                | Split -> printfn "Player Splits"
+                           playerTurn playerStrategy (chooseSplit gameState)
+                           
+                | DoubleDown -> printfn "Player Doubles Down"
+                                playerTurn playerStrategy (chooseDoubleDown gameState)
 
     // Plays one game with the given player strategy. Returns a GameLog recording the winner of the game.
     let oneGame playerStrategy gameState =
@@ -340,11 +357,12 @@ module MyBlackjack =
                     gameLog
                 else
                     let handResult = classify (List.head handsToCheck) dealerHand
-                    if handResult = Win then
-                        getGameLog (List.tail handsToCheck) dealerHand {gameLog with playerWins = currentPWins + 1}
-
-                    elif handResult = Win && (List.head handsToCheck).doubled = true then
+                    
+                    if handResult = Win && (List.head handsToCheck).doubled = true then
                         getGameLog (List.tail handsToCheck) dealerHand {gameLog with playerWins = currentPWins + 2}
+
+                    elif handResult = Win then
+                        getGameLog (List.tail handsToCheck) dealerHand {gameLog with playerWins = currentPWins + 1}
 
                     elif handResult = Draw then
                         getGameLog (List.tail handsToCheck) dealerHand {gameLog with draws = currentDraws + 1}
@@ -447,7 +465,9 @@ module MyBlackjack =
         let handSum = handTotal activeHand.cards
         let dealerTopCard = cardValue (List.head gameState.dealer)
 
-        if (handSum = 10 && dealerTopCard < 10) || handSum = 11 || (handSum = 9 && dealerTopCard <> 2) || (handSum = 9 && dealerTopCard < 7) then
+        if (cardValue card1 = 5 && cardValue card2 = 5) then 
+            DoubleDown
+        elif (handSum = 10 && dealerTopCard < 10) || handSum = 11 || (handSum = 9 && dealerTopCard <> 2) || (handSum = 9 && dealerTopCard < 7) then
             DoubleDown
         elif (handSum = 10 && dealerTopCard >= 10) || (handSum = 9 && dealerTopCard = 2) || (handSum = 9 && dealerTopCard >= 7) then
             Hit
@@ -485,16 +505,17 @@ open MyBlackjack
 
 [<EntryPoint>]
 let main argv =
+
     let nGamesInactive = manyGames 1000 inactivePlayerStrategy
     let nGamesGreedy = manyGames 1000 greedyPlayerStrategy
     let nGamesCoin = manyGames 1000 coinFlipPlayerStrategy
-    let nGamesBasic = manyGames 1000 basicPlayerStrategy
-    printfn "\n"
+    let nGamesBasic = manyGames 1000 basicPlayerStrategy 
 
+    printfn "\n\n\n"    
     // TODO: call manyGames to run 1000 games with a particular strategy.
     nGamesInactive |> printfn "1000 Inactive Games: %A"
     nGamesGreedy |> printfn "1000 Greedy Games: %A"
     nGamesCoin |> printfn "1000 Coin Flip Games: %A"
     nGamesBasic |> printfn "1000 Basic Strategy Games: %A"
-
+    
     0 // return an integer exit code
